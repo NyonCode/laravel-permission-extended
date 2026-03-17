@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace NyonCode\PermissionExtended;
 
+use Exception;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Gate;
@@ -14,9 +16,22 @@ use NyonCode\LaravelPackageToolkit\PackageServiceProvider;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
+use Throwable;
 
+/**
+ * Service provider for Laravel Permission Extended.
+ */
 class PermissionExtendedServiceProvider extends PackageServiceProvider implements Packable
 {
+
+    /**
+     * Register any package services.
+     *
+     * @param Packager $packager
+     * @return void
+     *
+     * @throws Exception
+     */
     public function configure(Packager $packager): void
     {
         $packager
@@ -36,12 +51,24 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
             });
     }
 
+    /**
+     * Bootstrap the package before the application is fully booted.
+     *
+     * @return void
+     *
+     * @throws BindingResolutionException
+     */
     public function bootingPackage(): void
     {
         $this->registerSuperAdmin();
         $this->registerMiddleware();
     }
 
+    /**
+     * Bootstrap the package after the application has booted.
+     *
+     * @return void
+     */
     public function bootedPackage(): void
     {
         Blade\Directives::register();
@@ -49,11 +76,12 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
         $this->app->terminating(fn () => WildcardChecker::flush());
     }
 
-    // =================================================================
-    // Super-Admin Gate
-    // =================================================================
-
-    protected function registerSuperAdmin(): void
+    /**
+     * Register the super admin gate.
+     *
+     * @return void
+     */
+    public function registerSuperAdmin(): void
     {
         $role = config('permission-extended.super_admin_role');
 
@@ -70,11 +98,14 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
         });
     }
 
-    // =================================================================
-    // Spatie Middleware Auto-Registration
-    // =================================================================
-
-    protected function registerMiddleware(): void
+    /**
+     * Register the middleware.
+     *
+     * @return void
+     *
+     * @throws BindingResolutionException
+     */
+    public function registerMiddleware(): void
     {
         if (! config('permission-extended.register_middleware', true)) {
             return;
@@ -88,22 +119,28 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
         $router->aliasMiddleware('role_or_permission', RoleOrPermissionMiddleware::class);
     }
 
-    // =================================================================
-    // Broadcast Channel
-    // =================================================================
-
-    protected function registerBroadcastChannel(): void
+    /**
+     * Register the broadcast channel.
+     *
+     * @return void
+     */
+    public function registerBroadcastChannel(): void
     {
         try {
             Broadcast::channel(
                 'permissions.{userId}',
                 fn ($user, $userId) => (int) $user->getKey() === (int) $userId
             );
-        } catch (\Throwable) {
+        } catch (Throwable) {
             // Broadcasting not configured.
         }
     }
 
+    /**
+     * Get the package's about data.
+     *
+     * @return array<string,string>
+     */
     public function aboutData(): array
     {
         return [

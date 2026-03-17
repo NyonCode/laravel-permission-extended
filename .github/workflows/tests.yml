@@ -3,79 +3,110 @@ name: Tests
 on:
   push:
     branches: [main, '*.x']
+    paths-ignore: ['**.md', 'docs/**']
   pull_request:
     branches: [main, '*.x']
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tests:
-    name: PHP ${{ matrix.php }} / L${{ matrix.laravel }} / ${{ matrix.stability }} / ${{ matrix.os }}
+    name: 🧪 P${{ matrix.php }} L${{ matrix.laravel }} ${{ matrix.stability }} ${{ matrix.os == 'windows-latest' && '🪟' || '🐧' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
         php: ['8.1', '8.2', '8.3', '8.4', '8.5']
-        laravel: ['10.*', '11.*', '12.*', '13.*']
-        stability: [prefer-lowest, prefer-stable]
+        laravel: ['10', '11', '12', '13']
+        stability: [prefer-stable, prefer-lowest]
+        os: [ubuntu-latest]
         exclude:
           # Laravel 11+ requires PHP 8.2+
-          - laravel: '11.*'
-            php: ['8.1']
-          # Laravel 12+ requires PHP 8.2+
-          - laravel: '12.*'
-            php: ['8.1']
-          - laravel: '13.*'
-            php: ['8.1', '8.2']
-          # Skip prefer-lowest on Windows to save CI time
-          - os: windows-latest
-            stability: prefer-lowest
+          - { laravel: '11', php: ['8.1'] }
+          - { laravel: '12', php: ['8.1'] }
+          - { laravel: '13', php: ['8.1', '8.2'] }
+        include:
+          # 🪟 Windows smoke tests (stable only, one PHP per Laravel)
+          - { php: '8.2', laravel: '10', stability: prefer-stable, os: windows-latest }
+          - { php: '8.3', laravel: '11', stability: prefer-stable, os: windows-latest }
+          - { php: '8.4', laravel: '12', stability: prefer-stable, os: windows-latest }
+          - { php: '8.5', laravel: '13', stability: prefer-stable, os: windows-latest }
 
     steps:
-      - name: Checkout
+      - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup PHP ${{ matrix.php }}
+      - name: 🐘 Setup PHP ${{ matrix.php }}
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
+          extensions: dom, curl, mbstring, zip, pdo, sqlite, pdo_sqlite, fileinfo
           coverage: none
           tools: composer:v2
 
-      - name: Validate composer.json
+      - name: ✅ Validate composer.json
         run: composer validate --strict
 
-      - name: Install dependencies
+      - name: 📦 Resolve dependency versions
+        id: versions
+        shell: bash
         run: |
-          composer require "illuminate/support:${{ matrix.laravel }}" --no-interaction --no-update
+          case "${{ matrix.laravel }}" in
+            10) echo "pest=^2.0" >> $GITHUB_OUTPUT; echo "testbench=^8.0" >> $GITHUB_OUTPUT ;;
+            11) echo "pest=^3.0" >> $GITHUB_OUTPUT; echo "testbench=^9.0" >> $GITHUB_OUTPUT ;;
+            12) echo "pest=^3.0" >> $GITHUB_OUTPUT; echo "testbench=^10.0" >> $GITHUB_OUTPUT ;;
+          esac
+
+      - name: 📦 Install dependencies
+        run: |
+          composer require "illuminate/support:${{ matrix.laravel }}.*" "orchestra/testbench:${{ steps.versions.outputs.testbench }}" "pestphp/pest:${{ steps.versions.outputs.pest }}" "pestphp/pest-plugin-laravel:${{ steps.versions.outputs.pest }}" --no-interaction --no-update
           composer update --${{ matrix.stability }} --no-interaction --no-progress
 
-      - name: Run tests
+      - name: 🧪 Run test suite
         run: vendor/bin/pest --colors=always
 
   coverage:
-    name: Code Coverage
+    name: 📊 Code Coverage
     runs-on: ubuntu-latest
     needs: tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
-      - name: Checkout
+      - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup PHP
+      - name: 🐘 Setup PHP with Xdebug
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
+          extensions: dom, curl, mbstring, zip, pdo, sqlite, pdo_sqlite, fileinfo
           coverage: xdebug
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: composer update --prefer-stable --no-interaction --no-progress
 
-      - name: Run tests with coverage
+      - name: 📊 Run tests with coverage
         run: vendor/bin/pest --coverage --colors=always --min=70
+
+  status:
+    name: ✅ Tests Status
+    runs-on: ubuntu-latest
+    needs: tests
+    if: always()
+
+    steps:
+      - name: Evaluate results
+        run: |
+          if [ "${{ needs.tests.result }}" != "success" ]; then
+            echo "::error::Tests failed"
+            exit 1
+          fi
+          echo "✅ All tests passed"

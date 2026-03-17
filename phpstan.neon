@@ -6,4 +6,4 @@ parameters:
   paths:
     - src
   ignoreErrors:
-    - '#Call to an undefined method Illuminate\\Contracts\\Auth\\Authenticatable#'
+    - '#Trait NyonCode\\PermissionExtended\\(Livewire\\WithPermissions|Traits\\HasWildcardPermissions) is used zero times and is not analysed#'
