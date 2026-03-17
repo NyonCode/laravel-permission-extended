@@ -108,7 +108,7 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
     {
         return [
             'Repository' => 'https://github.com/NyonCode/laravel-permission-extended',
-            'Autor' => 'Ondřej Nyklíček',
+            'Author' => 'Ondřej Nyklíček',
         ];
 
     }
