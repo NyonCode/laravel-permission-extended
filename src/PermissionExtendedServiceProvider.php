@@ -107,7 +107,8 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
     public function aboutData(): array
     {
         return [
-            'Autor' => 'Ondřej Nyklíček',
+            'Repository' => 'https://github.com/NyonCode/laravel-permission-extended',
+            'Author' => 'Ondřej Nyklíček',
         ];
 
     }
