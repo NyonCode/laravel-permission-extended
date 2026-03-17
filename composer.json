@@ -1,0 +1,60 @@
+{
+    "name": "nyoncode/laravel-permission-extended",
+    "description": "Wildcard permission matching, super-admin gate, Blade directives and Livewire support built on spatie/laravel-permission.",
+    "keywords": ["laravel", "permission", "roles", "wildcard", "spatie", "livewire", "blade", "super-admin"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "NyonCode",
+            "email": "ondrej.woop@nyoncode.cz"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "illuminate/support": "^10.0|^11.0|^12.0",
+        "nyoncode/laravel-package-toolkit": "^1.0",
+        "spatie/laravel-permission": "^6.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.0",
+        "livewire/livewire": "^3.0",
+        "orchestra/testbench": "^8.0|^9.0|^10.0",
+        "pestphp/pest": "^3.8",
+        "pestphp/pest-plugin-laravel": "^2.0|^3.0",
+        "phpstan/phpstan": "^1.10"
+    },
+    "suggest": {
+        "livewire/livewire": "Required for the WithPermissions Livewire trait (^3.0)."
+    },
+    "autoload": {
+        "psr-4": {
+            "NyonCode\\PermissionExtended\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "NyonCode\\PermissionExtended\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "NyonCode\\PermissionExtended\\PermissionExtendedServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "test": "pest",
+        "test-coverage": "pest --coverage",
+        "format": "pint",
+        "analyse": "phpstan analyse --no-progress"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
