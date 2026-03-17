@@ -9,6 +9,7 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use NyonCode\LaravelPackageToolkit\Commands\InstallCommand;
 use NyonCode\LaravelPackageToolkit\Contracts\Packable;
 use NyonCode\LaravelPackageToolkit\Packager;
@@ -23,12 +24,9 @@ use Throwable;
  */
 class PermissionExtendedServiceProvider extends PackageServiceProvider implements Packable
 {
-
     /**
      * Register any package services.
      *
-     * @param Packager $packager
-     * @return void
      *
      * @throws Exception
      */
@@ -54,7 +52,6 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
     /**
      * Bootstrap the package before the application is fully booted.
      *
-     * @return void
      *
      * @throws BindingResolutionException
      */
@@ -66,8 +63,6 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
 
     /**
      * Bootstrap the package after the application has booted.
-     *
-     * @return void
      */
     public function bootedPackage(): void
     {
@@ -78,8 +73,6 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
 
     /**
      * Register the super admin gate.
-     *
-     * @return void
      */
     public function registerSuperAdmin(): void
     {
@@ -101,7 +94,6 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
     /**
      * Register the middleware.
      *
-     * @return void
      *
      * @throws BindingResolutionException
      */
@@ -111,7 +103,7 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
             return;
         }
 
-        /** @var Router $router */
+        /** @var Route $router */
         $router = $this->app->make(Router::class);
 
         $router->aliasMiddleware('role', RoleMiddleware::class);
@@ -121,8 +113,6 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
 
     /**
      * Register the broadcast channel.
-     *
-     * @return void
      */
     public function registerBroadcastChannel(): void
     {

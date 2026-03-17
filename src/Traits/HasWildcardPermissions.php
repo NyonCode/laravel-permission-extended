@@ -54,12 +54,8 @@ trait HasWildcardPermissions
 
     /**
      * Determine if the user has the given permission or wildcard match.
-     *
-     * @param string|Permission $permission
-     * @param string|null $guardName
-     * @return bool
      */
-    public function hasPermissionTo($permission, $guardName = null): bool
+    public function hasPermissionTo(Permission|string $permission, ?string $guardName = null): bool
     {
         if (is_string($permission) && str_contains($permission, '*')) {
             return $this->matchesWildcard($permission, $guardName);
@@ -71,8 +67,7 @@ trait HasWildcardPermissions
     /**
      * Determine if the user has any of the given permissions.
      *
-     * @param string|Permission ...$permissions
-     * @return bool
+     * @param  string|Permission  ...$permissions
      */
     public function hasAnyPermission(...$permissions): bool
     {
@@ -100,8 +95,7 @@ trait HasWildcardPermissions
     /**
      * Determine if the user has all of the given permissions.
      *
-     * @param string|Permission ...$permissions
-     * @return bool
+     * @param  string|Permission  ...$permissions
      */
     public function hasAllPermissions(...$permissions): bool
     {
@@ -129,9 +123,7 @@ trait HasWildcardPermissions
     /**
      * Determine if the user has a role or a permission.
      *
-     * @param string|int|Role|Permission|array<int,string|int|Role|Permission>|Collection<int,string|int|Role|Permission> $rolesOrPermissions
-     * @param string|null $guardName
-     * @return bool
+     * @param  string|int|Role|Permission|array<int,string|int|Role|Permission>|Collection<int,string|int|Role|Permission>  $rolesOrPermissions
      */
     public function hasRoleOrPermission($rolesOrPermissions, ?string $guardName = null): bool
     {
@@ -167,8 +159,7 @@ trait HasWildcardPermissions
     /**
      * Give the user the given permissions and flush caches.
      *
-     * @param mixed ...$permissions
-     * @return static
+     * @param  mixed  ...$permissions
      */
     public function givePermissionTo(...$permissions): static
     {
@@ -181,11 +172,8 @@ trait HasWildcardPermissions
 
     /**
      * Revoke a permission and flush caches.
-     *
-     * @param mixed $permission
-     * @return static
      */
-    public function revokePermissionTo($permission): static
+    public function revokePermissionTo(mixed $permission): static
     {
         $this->spatieRevokePermissionTo($permission);
         $this->flushWildcardCache();
@@ -197,8 +185,7 @@ trait HasWildcardPermissions
     /**
      * Sync permissions and flush caches.
      *
-     * @param mixed ...$permissions
-     * @return static
+     * @param  mixed  ...$permissions
      */
     public function syncPermissions(...$permissions): static
     {
@@ -212,8 +199,7 @@ trait HasWildcardPermissions
     /**
      * Assign roles and flush caches.
      *
-     * @param mixed ...$roles
-     * @return static
+     * @param  mixed  ...$roles
      */
     public function assignRole(...$roles): static
     {
@@ -226,11 +212,8 @@ trait HasWildcardPermissions
 
     /**
      * Remove a role and flush caches.
-     *
-     * @param mixed $role
-     * @return static
      */
-    public function removeRole($role): static
+    public function removeRole(mixed $role): static
     {
         $this->spatieRemoveRole($role);
         $this->flushWildcardCache();
@@ -242,8 +225,7 @@ trait HasWildcardPermissions
     /**
      * Sync roles and flush caches.
      *
-     * @param mixed ...$roles
-     * @return static
+     * @param  mixed  ...$roles
      */
     public function syncRoles(...$roles): static
     {
@@ -261,8 +243,6 @@ trait HasWildcardPermissions
     /**
      * Get all Permission models whose name matches a wildcard pattern.
      *
-     * @param string $pattern
-     * @param string|null $guardName
      * @return Collection<int,Permission>
      */
     public function getWildcardPermissions(string $pattern, ?string $guardName = null): Collection
@@ -277,7 +257,6 @@ trait HasWildcardPermissions
     /**
      * All permission-name strings this model currently has.
      *
-     * @param string|null $guardName
      * @return Collection<int,string>
      */
     public function wildcardPermissionNames(?string $guardName = null): Collection
@@ -300,8 +279,6 @@ trait HasWildcardPermissions
 
     /**
      * Clear wildcard caches.
-     *
-     * @return static
      */
     public function flushWildcardCache(): static
     {
@@ -317,10 +294,6 @@ trait HasWildcardPermissions
 
     /**
      * Check whether the pattern matches any of the user's permissions.
-     *
-     * @param string $pattern
-     * @param string|null $guardName
-     * @return bool
      */
     protected function matchesWildcard(string $pattern, ?string $guardName = null): bool
     {
@@ -331,7 +304,6 @@ trait HasWildcardPermissions
     /**
      * Normalize roles or permissions input into an array.
      *
-     * @param mixed $items
      * @return array<int,mixed>
      */
     protected function normaliseItems(mixed $items): array
@@ -350,9 +322,7 @@ trait HasWildcardPermissions
     /**
      * Dispatch permission change events.
      *
-     * @param string $action
-     * @param array<int,mixed> $payload
-     * @return void
+     * @param  array<int,mixed>  $payload
      */
     protected function firePermissionEvent(string $action, array $payload): void
     {

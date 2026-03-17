@@ -20,16 +20,13 @@ class PermissionChanged implements ShouldBroadcast
 
     /**
      * Resolved user ID for the broadcast channel.
-     *
-     * @var int
      */
     public readonly int $userId;
 
     /**
      * Create a new event instance.
      *
-     * @param mixed $user
-     * @param array<string,mixed> $changes
+     * @param  array<string,mixed>  $changes
      */
     public function __construct(
         public readonly mixed $user,
@@ -64,8 +61,6 @@ class PermissionChanged implements ShouldBroadcast
 
     /**
      * Determine whether the event should broadcast.
-     *
-     * @return bool
      */
     public function broadcastWhen(): bool
     {

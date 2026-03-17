@@ -19,8 +19,6 @@ trait WithPermissions
 {
     /**
      * Currently authenticated user ID.
-     *
-     * @var int|null
      */
     public ?int $permUserId = null;
 
@@ -37,10 +35,6 @@ trait WithPermissions
 
     /**
      * Authorize a single permission or abort with 403.
-     *
-     * @param string $permission
-     * @param string|null $guard
-     * @return void
      */
     public function permAuthorize(string $permission, ?string $guard = null): void
     {
@@ -52,9 +46,7 @@ trait WithPermissions
     /**
      * Authorize if the user has any of the given permissions.
      *
-     * @param array<int,string> $permissions
-     * @param string|null $guard
-     * @return void
+     * @param  array<int,string>  $permissions
      */
     public function permAuthorizeAny(array $permissions, ?string $guard = null): void
     {
@@ -66,9 +58,7 @@ trait WithPermissions
     /**
      * Authorize if the user has all of the given permissions.
      *
-     * @param array<int,string> $permissions
-     * @param string|null $guard
-     * @return void
+     * @param  array<int,string>  $permissions
      */
     public function permAuthorizeAll(array $permissions, ?string $guard = null): void
     {
@@ -80,9 +70,7 @@ trait WithPermissions
     /**
      * Authorize if the user has a role or permission.
      *
-     * @param string|array<int,string> $items
-     * @param string|null $guard
-     * @return void
+     * @param  string|array<int,string>  $items
      */
     public function permAuthorizeRoleOr(string|array $items, ?string $guard = null): void
     {
@@ -97,10 +85,6 @@ trait WithPermissions
 
     /**
      * Check if the user has a permission.
-     *
-     * @param string $permission
-     * @param string|null $guard
-     * @return bool
      */
     public function permCan(string $permission, ?string $guard = null): bool
     {
@@ -120,9 +104,7 @@ trait WithPermissions
     /**
      * Check if the user has any of the given permissions.
      *
-     * @param array<int,string> $permissions
-     * @param string|null $guard
-     * @return bool
+     * @param  array<int,string>  $permissions
      */
     public function permCanAny(array $permissions, ?string $guard = null): bool
     {
@@ -134,9 +116,7 @@ trait WithPermissions
     /**
      * Check if the user has all of the given permissions.
      *
-     * @param array<int,string> $permissions
-     * @param string|null $guard
-     * @return bool
+     * @param  array<int,string>  $permissions
      */
     public function permCanAll(array $permissions, ?string $guard = null): bool
     {
@@ -148,9 +128,7 @@ trait WithPermissions
     /**
      * Check if the user has a role or permission.
      *
-     * @param string|array<int,string> $items
-     * @param string|null $guard
-     * @return bool
+     * @param  string|array<int,string>  $items
      */
     public function permCanRoleOr(string|array $items, ?string $guard = null): bool
     {
@@ -162,8 +140,6 @@ trait WithPermissions
     /**
      * Return permission names matching a wildcard pattern.
      *
-     * @param string $pattern
-     * @param string|null $guard
      * @return array<int,string>
      */
     public function permMatching(string $pattern, ?string $guard = null): array
@@ -184,8 +160,6 @@ trait WithPermissions
     #[On('permissions-changed')]
     /**
      * Refresh permission caches when permissions change.
-     *
-     * @return void
      */
     public function onPermissionsChanged(): void
     {
@@ -194,8 +168,6 @@ trait WithPermissions
 
     /**
      * Detect whether the permission snapshot has changed.
-     *
-     * @return bool
      */
     public function permissionsChanged(): bool
     {
@@ -239,8 +211,6 @@ trait WithPermissions
 
     /**
      * Livewire mount hook to initialize permission state.
-     *
-     * @return void
      */
     public function mountWithPermissions(): void
     {
@@ -255,8 +225,6 @@ trait WithPermissions
 
     /**
      * Livewire hydrate hook to refresh cached permissions.
-     *
-     * @return void
      */
     public function hydrateWithPermissions(): void
     {
@@ -277,9 +245,6 @@ trait WithPermissions
 
     /**
      * Get the authenticated user for a guard.
-     *
-     * @param string|null $guard
-     * @return mixed
      */
     protected function permUser(?string $guard = null): mixed
     {
@@ -288,8 +253,6 @@ trait WithPermissions
 
     /**
      * Refresh permission caches for the current user.
-     *
-     * @return void
      */
     protected function permRefresh(): void
     {
@@ -315,8 +278,6 @@ trait WithPermissions
 
     /**
      * Capture the current permission snapshot.
-     *
-     * @return void
      */
     protected function permTakeSnapshot(): void
     {

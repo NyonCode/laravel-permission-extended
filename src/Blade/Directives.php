@@ -14,8 +14,6 @@ final class Directives
 {
     /**
      * Register all custom Blade directives.
-     *
-     * @return void
      */
     public static function register(): void
     {
@@ -34,9 +32,6 @@ final class Directives
 
     /**
      * Evaluate the callback only when an authenticated user is present.
-     *
-     * @param Closure $callback
-     * @return bool
      */
     private static function check(Closure $callback): bool
     {

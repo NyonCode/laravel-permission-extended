@@ -17,8 +17,7 @@ class PermissionChangedQuiet
     /**
      * Create a new event instance.
      *
-     * @param mixed $user
-     * @param array<string,mixed> $changes
+     * @param  array<string,mixed>  $changes
      */
     public function __construct(
         public readonly mixed $user,

@@ -20,10 +20,6 @@ final class WildcardChecker
 
     /**
      * Check whether a permission name matches a wildcard pattern.
-     *
-     * @param string $pattern
-     * @param string $permission
-     * @return bool
      */
     public static function matches(string $pattern, string $permission): bool
     {
@@ -43,8 +39,7 @@ final class WildcardChecker
     /**
      * Return every item in $names that matches $pattern.
      *
-     * @param string $pattern
-     * @param Collection<int,string>|array<int,string> $names
+     * @param  Collection<int,string>|array<int,string>  $names
      * @return Collection<int,string>
      */
     public static function filter(string $pattern, Collection|array $names): Collection
@@ -60,8 +55,6 @@ final class WildcardChecker
 
     /**
      * Clear the wildcard match cache.
-     *
-     * @return void
      */
     public static function flush(): void
     {
@@ -72,10 +65,6 @@ final class WildcardChecker
 
     /**
      * Perform a regex-based wildcard match.
-     *
-     * @param string $pattern
-     * @param string $permission
-     * @return bool
      */
     private static function regexMatch(string $pattern, string $permission): bool
     {
