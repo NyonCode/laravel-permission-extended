@@ -11,12 +11,26 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * Broadcast event when permissions change.
+ */
 class PermissionChanged implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    /**
+     * Resolved user ID for the broadcast channel.
+     *
+     * @var int
+     */
     public readonly int $userId;
 
+    /**
+     * Create a new event instance.
+     *
+     * @param mixed $user
+     * @param array<string,mixed> $changes
+     */
     public function __construct(
         public readonly mixed $user,
         public readonly array $changes = [],
@@ -24,13 +38,21 @@ class PermissionChanged implements ShouldBroadcast
         $this->userId = $user->getKey();
     }
 
-    /** @return array<int,Channel> */
+    /**
+     * Get the channels the event should broadcast on.
+     *
+     * @return array<int,Channel>
+     */
     public function broadcastOn(): array
     {
         return [new PrivateChannel("permissions.{$this->userId}")];
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * Get the broadcast payload.
+     *
+     * @return array<string,mixed>
+     */
     public function broadcastWith(): array
     {
         return [
@@ -40,6 +62,11 @@ class PermissionChanged implements ShouldBroadcast
         ];
     }
 
+    /**
+     * Determine whether the event should broadcast.
+     *
+     * @return bool
+     */
     public function broadcastWhen(): bool
     {
         return (bool) config('permission-extended.broadcast_changes', false);
