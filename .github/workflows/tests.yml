@@ -29,8 +29,8 @@ jobs:
         stability: [prefer-stable, prefer-lowest]
         os: [ubuntu-latest]
         exclude:
-          # Laravel 11+ requires PHP 8.2+
-          - { laravel: '13', php: ['8.2'] }
+          # Pest 4 requires PHP 8.3+
+          - { laravel: '13', php: '8.2' }
         include:
           # 🪟 Windows smoke tests (stable only, one PHP per Laravel)
           - { php: '8.2', laravel: '10', stability: prefer-stable, os: windows-latest }
@@ -57,15 +57,43 @@ jobs:
         id: versions
         shell: bash
         run: |
+          set -euo pipefail
           case "${{ matrix.laravel }}" in
-            10) echo "pest=^2.0" >> $GITHUB_OUTPUT; echo "testbench=^8.0" >> $GITHUB_OUTPUT ;;
-            11) echo "pest=^3.0" >> $GITHUB_OUTPUT; echo "testbench=^9.0" >> $GITHUB_OUTPUT ;;
-            12) echo "pest=^3.0" >> $GITHUB_OUTPUT; echo "testbench=^10.0" >> $GITHUB_OUTPUT ;;
+            10)
+              echo "laravel=10.*" >> $GITHUB_OUTPUT
+              echo "pest=^2.0" >> $GITHUB_OUTPUT
+              echo "pest_plugin=^2.0" >> $GITHUB_OUTPUT
+              echo "testbench=^8.0" >> $GITHUB_OUTPUT
+              ;;
+            11)
+              echo "laravel=11.*" >> $GITHUB_OUTPUT
+              echo "pest=^3.0" >> $GITHUB_OUTPUT
+              echo "pest_plugin=^3.0" >> $GITHUB_OUTPUT
+              echo "testbench=^9.0" >> $GITHUB_OUTPUT
+              ;;
+            12)
+              echo "laravel=12.*" >> $GITHUB_OUTPUT
+              echo "pest=^3.0" >> $GITHUB_OUTPUT
+              echo "pest_plugin=^3.0" >> $GITHUB_OUTPUT
+              echo "testbench=^10.0" >> $GITHUB_OUTPUT
+              ;;
+            13)
+              echo "laravel=13.x-dev" >> $GITHUB_OUTPUT
+              echo "pest=^4.0" >> $GITHUB_OUTPUT
+              echo "pest_plugin=^4.0" >> $GITHUB_OUTPUT
+              echo "testbench=^11.0@dev" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "Unsupported Laravel version: ${{ matrix.laravel }}" >&2
+              exit 1
+              ;;
           esac
 
       - name: 📦 Install dependencies
+        shell: bash
         run: |
-          composer require "illuminate/support:${{ matrix.laravel }}.*" "orchestra/testbench:${{ steps.versions.outputs.testbench }}" "pestphp/pest:${{ steps.versions.outputs.pest }}" "pestphp/pest-plugin-laravel:${{ steps.versions.outputs.pest }}" --no-interaction --no-update
+          composer require "illuminate/support:${{ steps.versions.outputs.laravel }}" --no-interaction --no-update
+          composer require --dev "orchestra/testbench:${{ steps.versions.outputs.testbench }}" "pestphp/pest:${{ steps.versions.outputs.pest }}" "pestphp/pest-plugin-laravel:${{ steps.versions.outputs.pest_plugin }}" --no-interaction --no-update
           composer update --${{ matrix.stability }} --no-interaction --no-progress
 
       - name: 🧪 Run test suite
