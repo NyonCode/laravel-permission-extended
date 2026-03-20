@@ -25,22 +25,19 @@ jobs:
       fail-fast: false
       matrix:
         php: ['8.2', '8.3', '8.4', '8.5']
-        laravel: ['10', '11', '12', '13']
+        # Laravel 13 disabled until nyoncode/laravel-package-toolkit supports illuminate/support ^13.
+        laravel: ['10', '11', '12']
         stability: [prefer-stable, prefer-lowest]
         os: [ubuntu-latest]
-        exclude:
-          # Pest 4 requires PHP 8.3+
-          - { laravel: '13', php: '8.2' }
         include:
           # 🪟 Windows smoke tests (stable only, one PHP per Laravel)
           - { php: '8.2', laravel: '10', stability: prefer-stable, os: windows-latest }
           - { php: '8.3', laravel: '11', stability: prefer-stable, os: windows-latest }
           - { php: '8.4', laravel: '12', stability: prefer-stable, os: windows-latest }
-          - { php: '8.5', laravel: '13', stability: prefer-stable, os: windows-latest }
 
     steps:
       - name: 📥 Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🐘 Setup PHP ${{ matrix.php }}
         uses: shivammathur/setup-php@v2
@@ -77,12 +74,6 @@ jobs:
               echo "pest_plugin=^3.0" >> $GITHUB_OUTPUT
               echo "testbench=^10.0" >> $GITHUB_OUTPUT
               ;;
-            13)
-              echo "laravel=13.x-dev" >> $GITHUB_OUTPUT
-              echo "pest=^4.0" >> $GITHUB_OUTPUT
-              echo "pest_plugin=^4.0" >> $GITHUB_OUTPUT
-              echo "testbench=^11.0@dev" >> $GITHUB_OUTPUT
-              ;;
             *)
               echo "Unsupported Laravel version: ${{ matrix.laravel }}" >&2
               exit 1
@@ -107,7 +98,7 @@ jobs:
 
     steps:
       - name: 📥 Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🐘 Setup PHP with Xdebug
         uses: shivammathur/setup-php@v2
