@@ -12,6 +12,17 @@ class FakeLivewireComponent
 {
     use WithPermissions;
 
+    /**
+     * Simulated Livewire listeners property.
+     *
+     * Real Livewire components have this property internally.
+     * We declare it here so bootWithPermissions() can register
+     * dynamic Echo listeners during tests.
+     *
+     * @var array<string,string>
+     */
+    public array $listeners = [];
+
     private mixed $authUser = null;
 
     public function setUser(mixed $user): void
@@ -233,28 +244,57 @@ describe('mountWithPermissions', function () {
 });
 
 // -----------------------------------------------------------------
-// getListeners
+// #[On] attribute — permissions-changed listener
 // -----------------------------------------------------------------
 
-describe('getListeners', function () {
-    test('always includes permissions-changed', function () {
-        $listeners = $this->component->getListeners();
-        expect($listeners)->toHaveKey('permissions-changed');
+describe('on permissions-changed', function () {
+    test('onPermissionsChanged method exists and is callable', function () {
+        expect(method_exists($this->component, 'onPermissionsChanged'))->toBeTrue();
     });
 
-    test('excludes echo listener when broadcast disabled', function () {
+    test('onPermissionsChanged has #[On] attribute', function () {
+        $ref = new ReflectionMethod($this->component, 'onPermissionsChanged');
+        $attributes = $ref->getAttributes(Livewire\Attributes\On::class);
+
+        expect($attributes)->toHaveCount(1);
+
+        // The On attribute stores the event name as a constructor argument, not a property.
+        $args = $attributes[0]->getArguments();
+        expect($args[0])->toBe('permissions-changed');
+    });
+});
+
+// -----------------------------------------------------------------
+// Echo listener via bootWithPermissions
+// -----------------------------------------------------------------
+
+describe('bootWithPermissions', function () {
+    test('does not add echo listener when broadcast disabled', function () {
         config()->set('permission-extended.broadcast_changes', false);
         $this->component->mountWithPermissions();
+        $this->component->bootWithPermissions();
 
-        $listeners = $this->component->getListeners();
-        expect($listeners)->not->toHaveKey("echo-private:permissions.{$this->user->id},PermissionChanged");
+        expect($this->component->listeners)->not->toHaveKey(
+            "echo-private:permissions.{$this->user->id},PermissionChanged"
+        );
     });
 
-    test('includes echo listener when broadcast enabled and user set', function () {
+    test('adds echo listener when broadcast enabled and user set', function () {
         config()->set('permission-extended.broadcast_changes', true);
         $this->component->mountWithPermissions();
+        $this->component->bootWithPermissions();
 
-        $listeners = $this->component->getListeners();
-        expect($listeners)->toHaveKey("echo-private:permissions.{$this->user->id},PermissionChanged");
+        expect($this->component->listeners)->toHaveKey(
+            "echo-private:permissions.{$this->user->id},PermissionChanged"
+        );
+    });
+
+    test('does not add echo listener when no user', function () {
+        config()->set('permission-extended.broadcast_changes', true);
+        $c = new FakeLivewireComponent;
+        $c->mountWithPermissions();
+        $c->bootWithPermissions();
+
+        expect($c->listeners)->toBeEmpty();
     });
 });

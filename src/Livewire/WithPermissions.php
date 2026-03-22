@@ -14,6 +14,9 @@ use Spatie\Permission\PermissionRegistrar;
  *
  * All public methods use the "perm" prefix so they never collide with
  * Component::can() or AuthorizesRequests::authorize().
+ *
+ * Uses #[On] attributes instead of getListeners() to avoid conflicts
+ * with user-defined listeners in the component.
  */
 trait WithPermissions
 {
@@ -154,13 +157,16 @@ trait WithPermissions
     }
 
     // =================================================================
-    // Reactivity
+    // Reactivity — uses #[On] attribute (Livewire 3 native)
     // =================================================================
 
-    #[On('permissions-changed')]
     /**
      * Refresh permission caches when permissions change.
+     *
+     * Handles both client-side dispatches and Echo broadcast events.
+     * The Echo listener is registered dynamically in bootWithPermissions().
      */
+    #[On('permissions-changed')]
     public function onPermissionsChanged(): void
     {
         $this->permRefresh();
@@ -189,25 +195,27 @@ trait WithPermissions
         return $changed;
     }
 
-    /**
-     * Livewire listeners for permission updates.
-     *
-     * @return array<string,string>
-     */
-    public function getListeners(): array
-    {
-        $listeners = ['permissions-changed' => 'onPermissionsChanged'];
-
-        if (config('permission-extended.broadcast_changes', false) && $this->permUserId) {
-            $listeners["echo-private:permissions.{$this->permUserId},PermissionChanged"] = 'onPermissionsChanged';
-        }
-
-        return $listeners;
-    }
-
     // =================================================================
     // Lifecycle hooks
     // =================================================================
+
+    /**
+     * Livewire boot hook to register dynamic Echo listeners.
+     *
+     * Uses Livewire 3's internal $listeners property to add the Echo
+     * channel listener without overriding getListeners(). This avoids
+     * conflicts with user-defined listeners or other traits.
+     */
+    public function bootWithPermissions(): void
+    {
+        if (
+            config('permission-extended.broadcast_changes', false)
+            && $this->permUserId
+            && property_exists($this, 'listeners')
+        ) {
+            $this->listeners["echo-private:permissions.{$this->permUserId},PermissionChanged"] = 'onPermissionsChanged';
+        }
+    }
 
     /**
      * Livewire mount hook to initialize permission state.
