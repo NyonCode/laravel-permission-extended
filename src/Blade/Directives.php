@@ -4,10 +4,17 @@ declare(strict_types=1);
 
 namespace NyonCode\PermissionExtended\Blade;
 
+use Closure;
 use Illuminate\Support\Facades\Blade;
 
+/**
+ * Registers custom Blade directives for permission checks.
+ */
 final class Directives
 {
+    /**
+     * Register all custom Blade directives.
+     */
     public static function register(): void
     {
         $p = config('permission-extended.blade_prefix', '');
@@ -23,9 +30,12 @@ final class Directives
         Blade::if($p.'unlessCanPermission', fn (string $perm, ?string $guard = null) => ! self::check(fn ($u) => $u->hasPermissionTo($perm, $guard)));
     }
 
-    private static function check(\Closure $callback): bool
+    /**
+     * Evaluate the callback only when an authenticated user is present.
+     */
+    private static function check(Closure $callback): bool
     {
-        $user = auth()->user();
+        $user = auth()->guard()->user();
 
         return $user !== null && $callback($user);
     }

@@ -6,9 +6,16 @@ namespace NyonCode\PermissionExtended;
 
 use Illuminate\Support\Collection;
 
+/**
+ * Utility for matching permission names with wildcard patterns.
+ */
 final class WildcardChecker
 {
-    /** @var array<string, bool> */
+    /**
+     * Cache of computed match results.
+     *
+     * @var array<string, bool>
+     */
     private static array $cache = [];
 
     /**
@@ -32,7 +39,7 @@ final class WildcardChecker
     /**
      * Return every item in $names that matches $pattern.
      *
-     * @param  Collection<int,string>|array<string>  $names
+     * @param  Collection<int,string>|array<int,string>  $names
      * @return Collection<int,string>
      */
     public static function filter(string $pattern, Collection|array $names): Collection
@@ -46,6 +53,9 @@ final class WildcardChecker
         return $names->filter(fn (string $n): bool => self::matches($pattern, $n))->values();
     }
 
+    /**
+     * Clear the wildcard match cache.
+     */
     public static function flush(): void
     {
         self::$cache = [];
@@ -53,6 +63,9 @@ final class WildcardChecker
 
     // -----------------------------------------------------------------
 
+    /**
+     * Perform a regex-based wildcard match.
+     */
     private static function regexMatch(string $pattern, string $permission): bool
     {
         $regex = '/^'.str_replace('*', '.*', str_replace('.', '\.', $pattern)).'$/';

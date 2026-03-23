@@ -1,6 +1,20 @@
 # Laravel Permission Extended
 
+[![Tests](https://github.com/NyonCode/laravel-permission-extended/actions/workflows/tests.yml/badge.svg?branch=1.x)](https://github.com/NyonCode/laravel-permission-extended/actions/workflows/tests.yml)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/nyoncode/laravel-permission-extended.svg)](https://packagist.org/packages/nyoncode/laravel-permission-extended)
+[![Total Downloads](https://img.shields.io/packagist/dt/nyoncode/laravel-permission-extended.svg)](https://packagist.org/packages/nyoncode/laravel-permission-extended)
+[![License](https://img.shields.io/packagist/l/nyoncode/laravel-permission-extended.svg)](https://packagist.org/packages/nyoncode/laravel-permission-extended)
+
 Wildcard permissions, super-admin gate, auto middleware registration, Blade directives and Livewire support — all built on [spatie/laravel-permission](https://github.com/spatie/laravel-permission).
+
+## Support
+
+|             | Laravel 10 | Laravel 11 | Laravel 12 | Laravel 13 |
+|-------------|:---:|:---:|:-----------:|:----------:|
+| **PHP 8.2** | ✅ | ✅ |      ✅      |     -      |
+| **PHP 8.3** | ✅ | ✅ |      ✅      |     ✅      |
+| **PHP 8.4** | ✅ | ✅ |      ✅      |     ✅      |
+| **PHP 8.5** | — | ✅ |      ✅      |     ✅      |
 
 ```php
 // Wildcards just work in every Spatie method
@@ -25,18 +39,20 @@ The install command will publish config, Spatie migrations, run migrations and o
 
 ### Manual Setup
 
-Replace `HasRoles` with `HasWildcardPermissions` on your User model:
+Change the `HasRoles` import on your User model — from Spatie to this package:
 
 ```php
-use NyonCode\PermissionExtended\Traits\HasWildcardPermissions;
+// Before:  use Spatie\Permission\Traits\HasRoles;
+// After:
+use NyonCode\PermissionExtended\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasWildcardPermissions; // replaces HasRoles
+    use HasRoles;
 }
 ```
 
-> **Do not** use both `HasRoles` and `HasWildcardPermissions` — the latter includes `HasRoles` internally.
+> **Do not** use both Spatie's and this package's `HasRoles` on the same model — this one already includes Spatie's internally.
 
 ## Features
 

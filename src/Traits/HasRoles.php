@@ -11,7 +11,7 @@ use NyonCode\PermissionExtended\WildcardChecker;
 use Spatie\Permission\Contracts\Permission;
 use Spatie\Permission\Contracts\Role;
 use Spatie\Permission\Exceptions\PermissionDoesNotExist;
-use Spatie\Permission\Traits\HasRoles;
+use Spatie\Permission\Traits\HasRoles as SpatieHasRoles;
 
 /**
  * Drop-in replacement for Spatie's HasRoles.
@@ -20,35 +20,42 @@ use Spatie\Permission\Traits\HasRoles;
  *
  *     class User extends Authenticatable
  *     {
- *         use \NyonCode\PermissionExtended\Traits\HasWildcardPermissions;
+ *         use \NyonCode\PermissionExtended\Traits\HasRoles;
  *     }
  *
  * Every Spatie method keeps working. The four methods below now also
  * accept wildcard patterns (e.g. "admin.*").
  */
-trait HasWildcardPermissions
+trait HasRoles
 {
     // Import Spatie's trait and alias the methods we override.
-    use HasRoles {
-        HasRoles::hasPermissionTo as protected spatieHasPermissionTo;
-        HasRoles::hasAnyPermission as protected spatieHasAnyPermission;
-        HasRoles::hasAllPermissions as protected spatieHasAllPermissions;
-        HasRoles::givePermissionTo as protected spatieGivePermissionTo;
-        HasRoles::revokePermissionTo as protected spatieRevokePermissionTo;
-        HasRoles::syncPermissions as protected spatieSyncPermissions;
-        HasRoles::assignRole as protected spatieAssignRole;
-        HasRoles::removeRole as protected spatieRemoveRole;
-        HasRoles::syncRoles as protected spatieSyncRoles;
+    use SpatieHasRoles {
+        SpatieHasRoles::hasPermissionTo as protected spatieHasPermissionTo;
+        SpatieHasRoles::hasAnyPermission as protected spatieHasAnyPermission;
+        SpatieHasRoles::hasAllPermissions as protected spatieHasAllPermissions;
+        SpatieHasRoles::givePermissionTo as protected spatieGivePermissionTo;
+        SpatieHasRoles::revokePermissionTo as protected spatieRevokePermissionTo;
+        SpatieHasRoles::syncPermissions as protected spatieSyncPermissions;
+        SpatieHasRoles::assignRole as protected spatieAssignRole;
+        SpatieHasRoles::removeRole as protected spatieRemoveRole;
+        SpatieHasRoles::syncRoles as protected spatieSyncRoles;
     }
 
+    /**
+     * Cached list of permission names for wildcard matching.
+     *
+     * @var Collection<int,string>|null
+     */
     protected ?Collection $wildcardPermissionNamesCache = null;
 
     // =================================================================
     // Permission checks (with wildcard support)
     // =================================================================
 
-    /** @param  string|Permission  $permission */
-    public function hasPermissionTo($permission, $guardName = null): bool
+    /**
+     * Determine if the user has the given permission or wildcard match.
+     */
+    public function hasPermissionTo(Permission|string $permission, ?string $guardName = null): bool
     {
         if (is_string($permission) && str_contains($permission, '*')) {
             return $this->matchesWildcard($permission, $guardName);
@@ -57,7 +64,11 @@ trait HasWildcardPermissions
         return $this->spatieHasPermissionTo($permission, $guardName);
     }
 
-    /** @param  string|Permission  ...$permissions */
+    /**
+     * Determine if the user has any of the given permissions.
+     *
+     * @param  string|Permission  ...$permissions
+     */
     public function hasAnyPermission(...$permissions): bool
     {
         foreach (collect($permissions)->flatten() as $permission) {
@@ -81,7 +92,11 @@ trait HasWildcardPermissions
         return false;
     }
 
-    /** @param  string|Permission  ...$permissions */
+    /**
+     * Determine if the user has all of the given permissions.
+     *
+     * @param  string|Permission  ...$permissions
+     */
     public function hasAllPermissions(...$permissions): bool
     {
         foreach (collect($permissions)->flatten() as $permission) {
@@ -106,7 +121,9 @@ trait HasWildcardPermissions
     }
 
     /**
-     * @param  string|int|array|Role|Permission|Collection  $rolesOrPermissions
+     * Determine if the user has a role or a permission.
+     *
+     * @param  string|int|Role|Permission|array<int,string|int|Role|Permission>|Collection<int,string|int|Role|Permission>  $rolesOrPermissions
      */
     public function hasRoleOrPermission($rolesOrPermissions, ?string $guardName = null): bool
     {
@@ -139,6 +156,11 @@ trait HasWildcardPermissions
     // Mutation methods (auto-flush cache + fire events)
     // =================================================================
 
+    /**
+     * Give the user the given permissions and flush caches.
+     *
+     * @param  mixed  ...$permissions
+     */
     public function givePermissionTo(...$permissions): static
     {
         $this->spatieGivePermissionTo(...$permissions);
@@ -148,7 +170,10 @@ trait HasWildcardPermissions
         return $this;
     }
 
-    public function revokePermissionTo($permission): static
+    /**
+     * Revoke a permission and flush caches.
+     */
+    public function revokePermissionTo(mixed $permission): static
     {
         $this->spatieRevokePermissionTo($permission);
         $this->flushWildcardCache();
@@ -157,6 +182,11 @@ trait HasWildcardPermissions
         return $this;
     }
 
+    /**
+     * Sync permissions and flush caches.
+     *
+     * @param  mixed  ...$permissions
+     */
     public function syncPermissions(...$permissions): static
     {
         $this->spatieSyncPermissions(...$permissions);
@@ -166,6 +196,11 @@ trait HasWildcardPermissions
         return $this;
     }
 
+    /**
+     * Assign roles and flush caches.
+     *
+     * @param  mixed  ...$roles
+     */
     public function assignRole(...$roles): static
     {
         $this->spatieAssignRole(...$roles);
@@ -175,7 +210,10 @@ trait HasWildcardPermissions
         return $this;
     }
 
-    public function removeRole($role): static
+    /**
+     * Remove a role and flush caches.
+     */
+    public function removeRole(mixed $role): static
     {
         $this->spatieRemoveRole($role);
         $this->flushWildcardCache();
@@ -184,6 +222,11 @@ trait HasWildcardPermissions
         return $this;
     }
 
+    /**
+     * Sync roles and flush caches.
+     *
+     * @param  mixed  ...$roles
+     */
     public function syncRoles(...$roles): static
     {
         $this->spatieSyncRoles(...$roles);
@@ -197,7 +240,11 @@ trait HasWildcardPermissions
     // Helpers
     // =================================================================
 
-    /** Get all Permission models whose name matches a wildcard pattern. */
+    /**
+     * Get all Permission models whose name matches a wildcard pattern.
+     *
+     * @return Collection<int,Permission>
+     */
     public function getWildcardPermissions(string $pattern, ?string $guardName = null): Collection
     {
         $matching = WildcardChecker::filter($pattern, $this->wildcardPermissionNames($guardName));
@@ -207,7 +254,11 @@ trait HasWildcardPermissions
             ->values();
     }
 
-    /** All permission-name strings this model currently has. */
+    /**
+     * All permission-name strings this model currently has.
+     *
+     * @return Collection<int,string>
+     */
     public function wildcardPermissionNames(?string $guardName = null): Collection
     {
         $this->wildcardPermissionNamesCache ??= $this->getAllPermissions()
@@ -226,6 +277,9 @@ trait HasWildcardPermissions
         return $this->wildcardPermissionNamesCache;
     }
 
+    /**
+     * Clear wildcard caches.
+     */
     public function flushWildcardCache(): static
     {
         $this->wildcardPermissionNamesCache = null;
@@ -238,12 +292,20 @@ trait HasWildcardPermissions
     // Internal
     // =================================================================
 
+    /**
+     * Check whether the pattern matches any of the user's permissions.
+     */
     protected function matchesWildcard(string $pattern, ?string $guardName = null): bool
     {
         return WildcardChecker::filter($pattern, $this->wildcardPermissionNames($guardName))
             ->isNotEmpty();
     }
 
+    /**
+     * Normalize roles or permissions input into an array.
+     *
+     * @return array<int,mixed>
+     */
     protected function normaliseItems(mixed $items): array
     {
         if (is_string($items)) {
@@ -257,6 +319,11 @@ trait HasWildcardPermissions
         return is_array($items) ? $items : [$items];
     }
 
+    /**
+     * Dispatch permission change events.
+     *
+     * @param  array<int,mixed>  $payload
+     */
     protected function firePermissionEvent(string $action, array $payload): void
     {
         $quiet = PermissionChangedQuiet::class;
