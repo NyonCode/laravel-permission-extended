@@ -17,6 +17,7 @@ use NyonCode\LaravelPackageToolkit\Commands\InstallCommand;
 use NyonCode\LaravelPackageToolkit\Contracts\Packable;
 use NyonCode\LaravelPackageToolkit\Packager;
 use NyonCode\LaravelPackageToolkit\PackageServiceProvider;
+use NyonCode\PermissionExtended\Blade\Directives;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
@@ -68,7 +69,7 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
      */
     public function bootedPackage(): void
     {
-        Blade\Directives::register();
+        Directives::register();
         $this->registerBroadcastChannel();
         $this->app->terminating(fn () => WildcardChecker::flush());
     }
@@ -199,6 +200,8 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
 
     /**
      * Offer to replace HasRoles with HasWildcardPermissions in the User model.
+     *
+     * @throws FileNotFoundException
      */
     private function patchUserModel(InstallCommand $cmd): void
     {
@@ -214,11 +217,7 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
             return;
         }
 
-        try {
-            $contents = File::get($modelPath);
-        } catch (FileNotFoundException) {
-            return;
-        }
+        $contents = File::get($modelPath);
 
         $fileName = basename($modelPath);
 
