@@ -78,7 +78,7 @@ jobs:
               echo "pest_plugin=^3.0" >> $GITHUB_OUTPUT
               echo "testbench=^10.0" >> $GITHUB_OUTPUT
               ;;
-           12)
+           13)
               echo "laravel=13.*" >> $GITHUB_OUTPUT
               echo "pest=^4.0" >> $GITHUB_OUTPUT
               echo "pest_plugin=^4.0" >> $GITHUB_OUTPUT
