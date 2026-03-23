@@ -1,7 +1,6 @@
 # Laravel Permission Extended
 
-[![Tests](https://github.com/NyonCode/laravel-permission-extended/actions/workflows/tests.yml/badge.svg?branch=1.x)](https://github.com/NyonCode/laravel-permission-extended/actions/workflows/tests.yml)
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/nyoncode/laravel-permission-extended.svg)](https://packagist.org/packages/nyoncode/laravel-permission-extended)
+[![Tests](https://github.com/NyonCode/laravel-permission-extended/actions/workflows/tests.yml/badge.svg)](https://github.com/NyonCode/laravel-permission-extended/actions/workflows/tests.yml)[![Latest Version on Packagist](https://img.shields.io/packagist/v/nyoncode/laravel-permission-extended.svg)](https://packagist.org/packages/nyoncode/laravel-permission-extended)
 [![Total Downloads](https://img.shields.io/packagist/dt/nyoncode/laravel-permission-extended.svg)](https://packagist.org/packages/nyoncode/laravel-permission-extended)
 [![License](https://img.shields.io/packagist/l/nyoncode/laravel-permission-extended.svg)](https://packagist.org/packages/nyoncode/laravel-permission-extended)
 
