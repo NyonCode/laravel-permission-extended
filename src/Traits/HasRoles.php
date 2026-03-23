@@ -11,7 +11,7 @@ use NyonCode\PermissionExtended\WildcardChecker;
 use Spatie\Permission\Contracts\Permission;
 use Spatie\Permission\Contracts\Role;
 use Spatie\Permission\Exceptions\PermissionDoesNotExist;
-use Spatie\Permission\Traits\HasRoles;
+use Spatie\Permission\Traits\HasRoles as SpatieHasRoles;
 
 /**
  * Drop-in replacement for Spatie's HasRoles.
@@ -20,25 +20,25 @@ use Spatie\Permission\Traits\HasRoles;
  *
  *     class User extends Authenticatable
  *     {
- *         use \NyonCode\PermissionExtended\Traits\HasWildcardPermissions;
+ *         use \NyonCode\PermissionExtended\Traits\HasRoles;
  *     }
  *
  * Every Spatie method keeps working. The four methods below now also
  * accept wildcard patterns (e.g. "admin.*").
  */
-trait HasWildcardPermissions
+trait HasRoles
 {
     // Import Spatie's trait and alias the methods we override.
-    use HasRoles {
-        HasRoles::hasPermissionTo as protected spatieHasPermissionTo;
-        HasRoles::hasAnyPermission as protected spatieHasAnyPermission;
-        HasRoles::hasAllPermissions as protected spatieHasAllPermissions;
-        HasRoles::givePermissionTo as protected spatieGivePermissionTo;
-        HasRoles::revokePermissionTo as protected spatieRevokePermissionTo;
-        HasRoles::syncPermissions as protected spatieSyncPermissions;
-        HasRoles::assignRole as protected spatieAssignRole;
-        HasRoles::removeRole as protected spatieRemoveRole;
-        HasRoles::syncRoles as protected spatieSyncRoles;
+    use SpatieHasRoles {
+        SpatieHasRoles::hasPermissionTo as protected spatieHasPermissionTo;
+        SpatieHasRoles::hasAnyPermission as protected spatieHasAnyPermission;
+        SpatieHasRoles::hasAllPermissions as protected spatieHasAllPermissions;
+        SpatieHasRoles::givePermissionTo as protected spatieGivePermissionTo;
+        SpatieHasRoles::revokePermissionTo as protected spatieRevokePermissionTo;
+        SpatieHasRoles::syncPermissions as protected spatieSyncPermissions;
+        SpatieHasRoles::assignRole as protected spatieAssignRole;
+        SpatieHasRoles::removeRole as protected spatieRemoveRole;
+        SpatieHasRoles::syncRoles as protected spatieSyncRoles;
     }
 
     /**
