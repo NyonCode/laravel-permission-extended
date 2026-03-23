@@ -6,4 +6,4 @@ parameters:
   paths:
     - src
   ignoreErrors:
-    - '#Trait NyonCode\\PermissionExtended\\(Livewire\\WithPermissions|Traits\\HasWildcardPermissions) is used zero times and is not analysed#'
+    - '#Trait NyonCode\\PermissionExtended\\(Livewire\\WithPermissions|Traits\\HasRoles) is used zero times and is not analysed#'

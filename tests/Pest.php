@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use NyonCode\PermissionExtended\Tests\TestCase;
-use NyonCode\PermissionExtended\Traits\HasWildcardPermissions;
+use NyonCode\PermissionExtended\Traits\HasRoles;
 use Spatie\Permission\Models\Permission;
 
 /*
@@ -23,7 +23,7 @@ uses(TestCase::class)->in('Feature');
 
 class TestUser extends Authenticatable
 {
-    use HasWildcardPermissions;
+    use HasRoles;
 
     protected $table = 'users';
 

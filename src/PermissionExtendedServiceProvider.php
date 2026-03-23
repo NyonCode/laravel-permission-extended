@@ -199,7 +199,7 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
     }
 
     /**
-     * Offer to replace HasRoles with HasWildcardPermissions in the User model.
+     * Offer to replace Spatie HasRoles with NyonCode HasRoles in the User model.
      *
      * @throws FileNotFoundException
      */
@@ -212,7 +212,7 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
 
         if (! is_string($modelPath)) {
             $cmd->warn('Could not locate your User model. Add the trait manually:');
-            $cmd->line('  use \NyonCode\PermissionExtended\Traits\HasWildcardPermissions;');
+            $cmd->line('  use \NyonCode\PermissionExtended\Traits\HasRoles;');
 
             return;
         }
@@ -221,13 +221,13 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
 
         $fileName = basename($modelPath);
 
-        if (Str::contains($contents, 'HasWildcardPermissions')) {
+        if (Str::contains($contents, 'HasRoles')) {
             $cmd->line('  User model ['.$fileName.'] ... <info>ALREADY CONFIGURED</info>');
 
             return;
         }
 
-        if (! $cmd->confirm('Replace HasRoles with HasWildcardPermissions in your User model?', true)) {
+        if (! $cmd->confirm('Replace HasRoles in your User model?', true)) {
             return;
         }
 
@@ -239,16 +239,14 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
     }
 
     /**
-     * Apply the HasWildcardPermissions trait to file contents.
+     * Apply the HasRoles trait to file contents.
      */
     private function applyTraitPatch(string $contents): string
     {
-        $useImport = 'use NyonCode\PermissionExtended\Traits\HasWildcardPermissions;';
+        $useImport = 'use NyonCode\PermissionExtended\Traits\HasRoles;';
 
         // Case 1: Already has HasRoles → replace it
         if (Str::contains($contents, 'use HasRoles')) {
-            $contents = Str::replace('use HasRoles', 'use HasWildcardPermissions', $contents);
-
             return Str::replace(
                 'use Spatie\Permission\Traits\HasRoles;',
                 $useImport,
@@ -266,7 +264,7 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
 
         return (string) preg_replace(
             '/(class User extends \w+[^{]*\{)/',
-            "$1\n    use HasWildcardPermissions;\n",
+            "$1\n    use HasRoles;\n",
             $contents,
             1
         );
