@@ -13,18 +13,20 @@ The install command will:
 
 ### Manual Setup
 
-Replace `HasRoles` with `HasWildcardPermissions`:
+Change the `HasRoles` import — from Spatie to this package:
 
 ```php
-use NyonCode\PermissionExtended\Traits\HasWildcardPermissions;
+// Before:  use Spatie\Permission\Traits\HasRoles;
+// After:
+use NyonCode\PermissionExtended\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasWildcardPermissions;
+    use HasRoles;
 }
 ```
 
-Do not use both traits — `HasWildcardPermissions` includes `HasRoles` internally.
+Do not use both Spatie's and this package's `HasRoles` on the same model.
 
 ### Verify
 
