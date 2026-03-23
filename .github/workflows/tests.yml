@@ -78,6 +78,12 @@ jobs:
               echo "pest_plugin=^3.0" >> $GITHUB_OUTPUT
               echo "testbench=^10.0" >> $GITHUB_OUTPUT
               ;;
+           12)
+              echo "laravel=13.*" >> $GITHUB_OUTPUT
+              echo "pest=^4.0" >> $GITHUB_OUTPUT
+              echo "pest_plugin=^4.0" >> $GITHUB_OUTPUT
+              echo "testbench=^11.0" >> $GITHUB_OUTPUT
+              ;;
             *)
               echo "Unsupported Laravel version: ${{ matrix.laravel }}" >&2
               exit 1
