@@ -49,7 +49,7 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
                     ->publishConfig()
                     ->publishMigrations()
                     ->afterInstallation($this->postInstallStep())
-                    ->askToStarRepoOnGitHub('NyonCode/laravel-permission-extended');
+                    ->askToStarRepoOnGitHub('https://github.com/NyonCode/laravel-permission-extended');
             });
     }
 
@@ -199,7 +199,7 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
     }
 
     /**
-     * Offer to replace Spatie HasRoles with NyonCode HasRoles in the User model.
+     * Offer to add or replace HasRoles with NyonCode HasRoles in the User model.
      *
      * @throws FileNotFoundException
      */
@@ -212,28 +212,35 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
 
         if (! is_string($modelPath)) {
             $cmd->warn('Could not locate your User model. Add the trait manually:');
-            $cmd->line('  use \NyonCode\PermissionExtended\Traits\HasRoles;');
+            $cmd->line('  use NyonCode\PermissionExtended\Traits\HasRoles;');
 
             return;
         }
 
         $contents = File::get($modelPath);
-
         $fileName = basename($modelPath);
 
-        if (Str::contains($contents, 'HasRoles')) {
+        if (Str::contains($contents, 'NyonCode\PermissionExtended\Traits\HasRoles')) {
             $cmd->line('  User model ['.$fileName.'] ... <info>ALREADY CONFIGURED</info>');
 
             return;
         }
 
-        if (! $cmd->confirm('Replace HasRoles in your User model?', true)) {
+        $hasSpatie = Str::contains($contents, 'Spatie\Permission\Traits\HasRoles');
+
+        if ($hasSpatie) {
+            if (! $cmd->confirm('Spatie\\Permission\\Traits\\HasRoles detected in ['.$fileName.']. Replace with NyonCode HasRoles?', true)) {
+                $cmd->line('  User model ['.$fileName.'] ... <comment>SKIPPED</comment>');
+
+                return;
+            }
+        } elseif (! $cmd->confirm('Add NyonCode\\PermissionExtended\\Traits\\HasRoles to ['.$fileName.'] automatically?', true)) {
+            $cmd->line('  User model ['.$fileName.'] ... <comment>SKIPPED</comment>');
+
             return;
         }
 
-        $updated = $this->applyTraitPatch($contents);
-
-        File::put($modelPath, $updated);
+        File::put($modelPath, $this->applyTraitPatch($contents, $hasSpatie));
 
         $cmd->line('  User model ['.$fileName.'] ... <info>PATCHED</info>');
     }
@@ -241,29 +248,25 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
     /**
      * Apply the HasRoles trait to file contents.
      */
-    private function applyTraitPatch(string $contents): string
+    private function applyTraitPatch(string $contents, bool $replaceSpatie = false): string
     {
-        $useImport = 'use NyonCode\PermissionExtended\Traits\HasRoles;';
+        $import = 'use NyonCode\PermissionExtended\Traits\HasRoles;';
 
-        // Case 1: Already has HasRoles → replace it
-        if (Str::contains($contents, 'use HasRoles')) {
-            return Str::replace(
-                'use Spatie\Permission\Traits\HasRoles;',
-                $useImport,
-                $contents
-            );
+        // Case 1: Replace Spatie import — use statement inside class stays as-is
+        if ($replaceSpatie) {
+            return Str::replace('use Spatie\Permission\Traits\HasRoles;', $import, $contents);
         }
 
-        // Case 2: No HasRoles → add our trait
-        $contents = (string) preg_replace(
-            '/(use [^;]+;)(\s*class )/m',
-            '$1'."\n".$useImport.'$2',
-            $contents,
-            1
-        );
+        // Case 2: No HasRoles — insert import after the last top-level use statement
+        if (preg_match_all('/^use [^;]+;$/m', $contents, $matches, PREG_OFFSET_CAPTURE)) {
+            $lastUse = end($matches[0]);
+            $pos = $lastUse[1] + strlen($lastUse[0]);
+            $contents = substr($contents, 0, $pos)."\n".$import.substr($contents, $pos);
+        }
 
+        // Add `use HasRoles;` at the top of the class body
         return (string) preg_replace(
-            '/(class User extends \w+[^{]*\{)/',
+            '/(class\s+\w+[^{]*\{)/s',
             "$1\n    use HasRoles;\n",
             $contents,
             1
