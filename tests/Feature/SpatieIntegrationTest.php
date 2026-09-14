@@ -161,3 +161,15 @@ class SpatieOnlyUser extends User
 
     protected $guard_name = 'web';
 }
+
+describe('global role permissions without teams', function () {
+    test('are the role\'s permissions, counted once', function () {
+        permissions(['users.view']);
+        Role::create(['name' => 'admin', 'guard_name' => 'web'])->givePermissionTo('users.view');
+        $user = testUser('admin-no-teams@example.com');
+        $user->assignGlobalRole('admin');
+
+        expect($user->hasPermissionTo('users.view'))->toBeTrue()
+            ->and($user->getAllPermissions()->pluck('name')->all())->toBe(['users.view']);
+    });
+});

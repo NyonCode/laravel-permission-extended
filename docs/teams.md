@@ -27,6 +27,36 @@ $user->removeGlobalRole('super-admin');
   removing a role clears it.
 - Without teams, the global methods are the plain role methods.
 
+## Administrators across all teams
+
+A global role is not only for the super-admin. Give a global role permissions and
+assign it globally, and those permissions count in every team:
+
+```php
+$admin = Role::create(['name' => 'admin', 'guard_name' => 'web']); // no team: global
+$admin->givePermissionTo(['users.view', 'users.edit']);
+
+$user->assignGlobalRole('admin');
+
+$user->can('users.edit');          // true in every team, and outside any
+$user->can('billing.view');        // false: it has only what the role carries
+```
+
+The difference from the super-admin is the whole point: **the super-admin bypasses
+every check, an administrator has a list.** Take `users.edit` from the role and
+the administrator loses it everywhere; there is nothing to take from a
+super-admin.
+
+Global permissions add up with the current team's: `hasPermissionTo()`,
+`hasAnyPermission()`, `hasAllPermissions()`, `hasRoleOrPermission()`, wildcards,
+`getAllPermissions()`, `$user->can()` and the `permission:` middleware all see
+both. They are read in one query per model instance and never for an account with
+no global roles.
+
+`hasRole()` does not change: it is still the current team's question, and so are
+`@role` and the `role:` middleware. Ask `hasGlobalRole()` for a global role — or,
+better, check a permission, which answers the same way whoever granted it.
+
 ## How it is stored
 
 Spatie's pivot makes the team column part of its primary key, so it cannot be

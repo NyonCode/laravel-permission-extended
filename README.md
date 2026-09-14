@@ -83,6 +83,8 @@ With Spatie's teams on, only a **global** assignment counts — a super-admin ca
 $user->assignGlobalRole('super-admin');
 ```
 
+A global role with ordinary permissions — an administrator across all teams, who can do what the role carries and nothing more — works the same way: its permissions count in every team.
+
 See [Teams and Global Roles](docs/teams.md).
 
 ### Automatic Middleware Registration
