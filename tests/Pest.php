@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use NyonCode\PermissionExtended\Tests\TeamsTestCase;
 use NyonCode\PermissionExtended\Tests\TestCase;
 use NyonCode\PermissionExtended\Traits\HasRoles;
 use Spatie\Permission\Models\Permission;
@@ -14,6 +15,7 @@ use Spatie\Permission\Models\Permission;
 */
 
 uses(TestCase::class)->in('Feature');
+uses(TeamsTestCase::class)->in('Teams');
 
 /*
 |--------------------------------------------------------------------------

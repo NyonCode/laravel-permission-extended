@@ -19,6 +19,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Global Team Id
+    |--------------------------------------------------------------------------
+    |
+    | With Spatie's teams on, every role assignment belongs to a team, and the
+    | team column is part of the pivot's primary key, so it cannot be null.
+    | Roles that must count in every team — the super-admin above all — are
+    | stored under this reserved id by assignGlobalRole(). It must never be the
+    | id of a real team: 0 is safe for auto-increment ids; use another value for
+    | UUID teams. With teams off it is not used.
+    |
+    | The super-admin gate only honours a global assignment when teams are on.
+    |
+    */
+
+    'global_team_id' => env('PERMISSION_GLOBAL_TEAM_ID', 0),
+
+    /*
+    |--------------------------------------------------------------------------
     | Register Spatie Middleware Aliases
     |--------------------------------------------------------------------------
     |

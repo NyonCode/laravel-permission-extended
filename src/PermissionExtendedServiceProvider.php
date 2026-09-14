@@ -21,6 +21,7 @@ use NyonCode\PermissionExtended\Blade\Directives;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
+use Spatie\Permission\PermissionRegistrar;
 use Throwable;
 
 /**
@@ -86,7 +87,16 @@ class PermissionExtendedServiceProvider extends PackageServiceProvider implement
         }
 
         Gate::before(static function ($user, string $_ability) use ($role) {
-            if (method_exists($user, 'hasRole') && $user->hasRole($role)) {
+            // A super-admin can do everything everywhere, so with teams on only a
+            // global assignment counts: one made in a single team would bypass
+            // every check while that team is current, and nothing else.
+            if (method_exists($user, 'hasGlobalRole')) {
+                return $user->hasGlobalRole($role) ? true : null;
+            }
+
+            // A model on Spatie's own trait has no global roles. Without teams a
+            // role is already global; with teams it cannot be one, so no bypass.
+            if (! app(PermissionRegistrar::class)->teams && method_exists($user, 'hasRole') && $user->hasRole($role)) {
                 return true;
             }
 
