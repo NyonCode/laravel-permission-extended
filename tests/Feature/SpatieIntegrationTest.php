@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
+use Illuminate\Foundation\Auth\User;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Gate;
 use NyonCode\PermissionExtended\PermissionExtendedServiceProvider;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Traits\HasRoles;
 
 // -----------------------------------------------------------------
 // Super-Admin Gate::before
@@ -117,3 +119,45 @@ describe('permission:flush command', function () {
         expect($user->hasPermissionTo('test.permission'))->toBeTrue();
     });
 });
+
+describe('global roles without teams', function () {
+    test('are plain roles, and the super-admin gate works as before', function () {
+        Role::create(['name' => 'super-admin', 'guard_name' => 'web']);
+        $user = testUser('global-no-teams@example.com');
+
+        $user->assignGlobalRole('super-admin');
+
+        expect($user->hasRole('super-admin'))->toBeTrue()
+            ->and($user->hasGlobalRole('super-admin'))->toBeTrue()
+            ->and($user->can('anything'))->toBeTrue();
+
+        $user->removeGlobalRole('super-admin');
+
+        expect($user->fresh()->hasGlobalRole('super-admin'))->toBeFalse();
+    });
+
+    test('a model on Spatie\'s own trait still gets the bypass', function () {
+        Role::create(['name' => 'super-admin', 'guard_name' => 'web']);
+        $user = SpatieOnlyUser::create(['name' => 'Spatie', 'email' => 'spatie-plain@example.com']);
+        $user->assignRole('super-admin');
+
+        expect($user->can('anything'))->toBeTrue();
+    });
+
+    test('the reserved id falls back to 0 when it is configured as something unusable', function () {
+        config()->set('permission-extended.global_team_id', ['nope']);
+
+        expect(TestUser::globalTeamId())->toBe(0);
+    });
+});
+
+class SpatieOnlyUser extends User
+{
+    use HasRoles;
+
+    protected $table = 'users';
+
+    protected $guarded = [];
+
+    protected $guard_name = 'web';
+}

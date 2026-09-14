@@ -77,6 +77,14 @@ Configured via `config/permission-extended.php`:
 
 Users with this role pass every `Gate::allows()` / `@can()` / `$user->can()` check automatically. No need to assign individual permissions.
 
+With Spatie's teams on, only a **global** assignment counts — a super-admin can do everything everywhere, not only while one team is current:
+
+```php
+$user->assignGlobalRole('super-admin');
+```
+
+See [Teams and Global Roles](docs/teams.md).
+
 ### Automatic Middleware Registration
 
 Spatie's middleware is registered automatically — no manual setup in `bootstrap/app.php`:
@@ -140,6 +148,7 @@ Clears both Spatie's permission cache and the wildcard pattern cache.
 - [Middleware](docs/middleware.md)
 - [Livewire](docs/livewire.md)
 - [Reactive Updates](docs/reactivity.md)
+- [Teams and Global Roles](docs/teams.md)
 - [Configuration](docs/configuration.md)
 
 ## Testing

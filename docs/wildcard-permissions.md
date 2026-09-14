@@ -25,6 +25,8 @@ $user->assignRole('super-admin');
 $user->can('anything.at.all'); // true — via Gate::before
 ```
 
+With teams on, use `$user->assignGlobalRole('super-admin')` — see [Teams and Global Roles](teams.md).
+
 ### Cache
 
 ```bash

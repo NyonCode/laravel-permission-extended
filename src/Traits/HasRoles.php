@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace NyonCode\PermissionExtended\Traits;
 
+use Closure;
 use Illuminate\Support\Collection;
 use NyonCode\PermissionExtended\Events\PermissionChanged;
 use NyonCode\PermissionExtended\Events\PermissionChangedQuiet;
@@ -11,6 +12,7 @@ use NyonCode\PermissionExtended\WildcardChecker;
 use Spatie\Permission\Contracts\Permission;
 use Spatie\Permission\Contracts\Role;
 use Spatie\Permission\Exceptions\PermissionDoesNotExist;
+use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\Traits\HasRoles as SpatieHasRoles;
 
 /**
@@ -25,6 +27,13 @@ use Spatie\Permission\Traits\HasRoles as SpatieHasRoles;
  *
  * Every Spatie method keeps working. The four methods below now also
  * accept wildcard patterns (e.g. "admin.*").
+ *
+ * With Spatie's teams on, a role is assigned *in a team* and only counts while
+ * that team is the current one. The global-role methods are for the roles that
+ * must count everywhere — above all the super-admin — and store the assignment
+ * under a reserved team id (`permission-extended.global_team_id`), because the
+ * team column on Spatie's pivot is part of its primary key and cannot be null.
+ * Without teams they are the plain role methods.
  */
 trait HasRoles
 {
@@ -47,6 +56,16 @@ trait HasRoles
      * @var Collection<int,string>|null
      */
     protected ?Collection $wildcardPermissionNamesCache = null;
+
+    /**
+     * Global role names, as `name|guard` keys, read once per model instance.
+     *
+     * The super-admin gate asks on every ability check, and a page of a table
+     * makes dozens of them.
+     *
+     * @var Collection<int,string>|null
+     */
+    protected ?Collection $globalRoleKeysCache = null;
 
     // =================================================================
     // Permission checks (with wildcard support)
@@ -237,6 +256,81 @@ trait HasRoles
     }
 
     // =================================================================
+    // Global roles (count in every team)
+    // =================================================================
+
+    /**
+     * Assign roles that count in every team, not just the current one.
+     *
+     * The roles are looked up as global roles — ones that belong to no team —
+     * so a role a team owns cannot be made global by accident.
+     *
+     * @param  mixed  ...$roles
+     */
+    public function assignGlobalRole(...$roles): static
+    {
+        $this->withinGlobalScope(fn () => $this->spatieAssignRole(...$roles));
+        $this->flushWildcardCache();
+        $this->firePermissionEvent('assign_global_role', $roles);
+
+        return $this;
+    }
+
+    /**
+     * Remove a role assigned with {@see assignGlobalRole()}.
+     */
+    public function removeGlobalRole(mixed $role): static
+    {
+        $this->withinGlobalScope(fn () => $this->spatieRemoveRole($role));
+        $this->flushWildcardCache();
+        $this->firePermissionEvent('remove_global_role', [$role]);
+
+        return $this;
+    }
+
+    /**
+     * Whether the model has any of the given roles globally.
+     *
+     * Independent of the current team: this is the question the super-admin
+     * gate asks, and a super-admin assigned in one team only is not one.
+     *
+     * @param  string|Role|array<int,string|Role>  $roles
+     */
+    public function hasGlobalRole(string|Role|array $roles, ?string $guardName = null): bool
+    {
+        if (! app(PermissionRegistrar::class)->teams) {
+            return $this->hasRole($roles, $guardName);
+        }
+
+        $keys = $this->globalRoleKeys();
+
+        foreach (is_array($roles) ? $roles : [$roles] as $role) {
+            $name = $role instanceof Role ? $role->name : $role;
+            $guard = $role instanceof Role ? $role->guard_name : $guardName;
+
+            $matches = $guard === null
+                ? $keys->contains(fn (string $key): bool => str_starts_with($key, $name.'|'))
+                : $keys->contains($name.'|'.$guard);
+
+            if ($matches) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The reserved team id global assignments are stored under.
+     */
+    public static function globalTeamId(): int|string
+    {
+        $id = config('permission-extended.global_team_id', 0);
+
+        return is_int($id) || is_string($id) ? $id : 0;
+    }
+
+    // =================================================================
     // Helpers
     // =================================================================
 
@@ -283,6 +377,7 @@ trait HasRoles
     public function flushWildcardCache(): static
     {
         $this->wildcardPermissionNamesCache = null;
+        $this->globalRoleKeysCache = null;
         WildcardChecker::flush();
 
         return $this;
@@ -299,6 +394,65 @@ trait HasRoles
     {
         return WildcardChecker::filter($pattern, $this->wildcardPermissionNames($guardName))
             ->isNotEmpty();
+    }
+
+    /**
+     * Run a callback with the global team as the current one, then put it back.
+     *
+     * The loaded `roles` relation is dropped on both sides: Spatie reads it for
+     * the team that was current when it loaded, and a stale one would make the
+     * callback — or the code after it — answer about the wrong team.
+     */
+    protected function withinGlobalScope(Closure $callback): mixed
+    {
+        $registrar = app(PermissionRegistrar::class);
+
+        if (! $registrar->teams) {
+            return $callback();
+        }
+
+        $previous = $registrar->getPermissionsTeamId();
+        $registrar->setPermissionsTeamId(static::globalTeamId());
+        $this->unsetRelation('roles');
+
+        try {
+            return $callback();
+        } finally {
+            $registrar->setPermissionsTeamId($previous);
+            $this->unsetRelation('roles');
+        }
+    }
+
+    /**
+     * The model's global role assignments, read straight off the pivot.
+     *
+     * Only roles that belong to no team (or to the reserved global one) count,
+     * which is what {@see assignGlobalRole()} can store.
+     *
+     * @return Collection<int,string>
+     */
+    protected function globalRoleKeys(): Collection
+    {
+        if ($this->globalRoleKeysCache !== null) {
+            return $this->globalRoleKeysCache;
+        }
+
+        $registrar = app(PermissionRegistrar::class);
+        $roleClass = $this->getRoleClass();
+        $role = new $roleClass;
+        $pivot = (string) config('permission.table_names.model_has_roles');
+        $morphKey = (string) config('permission.column_names.model_morph_key');
+        $teamOnRole = $role->getTable().'.'.$registrar->teamsKey;
+
+        return $this->globalRoleKeysCache = $roleClass::query()
+            ->join($pivot, $pivot.'.'.$registrar->pivotRole, '=', $role->getQualifiedKeyName())
+            ->where($pivot.'.'.$morphKey, $this->getKey())
+            ->where($pivot.'.model_type', $this->getMorphClass())
+            ->where($pivot.'.'.$registrar->teamsKey, static::globalTeamId())
+            ->where(fn ($q) => $q->whereNull($teamOnRole)->orWhere($teamOnRole, static::globalTeamId()))
+            ->get([$role->getTable().'.name', $role->getTable().'.guard_name'])
+            ->map(fn ($r): string => $r->name.'|'.$r->guard_name)
+            ->values();
     }
 
     /**
