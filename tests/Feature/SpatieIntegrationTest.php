@@ -173,3 +173,14 @@ describe('global role permissions without teams', function () {
             ->and($user->getAllPermissions()->pluck('name')->all())->toBe(['users.view']);
     });
 });
+
+describe('hasGlobalPermission without teams', function () {
+    test('is every permission the model has, and no for one that does not exist', function () {
+        permissions(['users.view']);
+        $user = testUser('global-perm-no-teams@example.com');
+        $user->givePermissionTo('users.view');
+
+        expect($user->hasGlobalPermission('users.view'))->toBeTrue()
+            ->and($user->hasGlobalPermission('nope.never'))->toBeFalse();
+    });
+});

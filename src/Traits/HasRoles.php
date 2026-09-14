@@ -92,7 +92,7 @@ trait HasRoles
         }
 
         return $this->spatieHasPermissionTo($permission, $guardName)
-            || $this->hasPermissionViaGlobalRole($permission, $guardName);
+            || (app(PermissionRegistrar::class)->teams && $this->hasGlobalPermission($permission, $guardName));
     }
 
     /**
@@ -333,6 +333,42 @@ trait HasRoles
     }
 
     /**
+     * Whether the model has this permission everywhere — through a global role.
+     *
+     * The question a screen asks to decide between "everything" and "the
+     * current team": a permission from a role of one team answers no here, a
+     * permission from a global role answers yes. It is not the super-admin
+     * bypass, which carries no permissions at all; ask {@see hasGlobalRole()}
+     * for that.
+     *
+     * Accepts a wildcard, and answers false rather than throwing for a
+     * permission that does not exist — nobody has that anywhere. Without teams
+     * every role is global, so it is {@see hasPermissionTo()}.
+     */
+    public function hasGlobalPermission(Permission|string $permission, ?string $guardName = null): bool
+    {
+        try {
+            if (! app(PermissionRegistrar::class)->teams) {
+                return $this->hasPermissionTo($permission, $guardName);
+            }
+
+            if (is_string($permission) && str_contains($permission, '*')) {
+                $names = $this->globalPermissions()
+                    ->when($guardName !== null, fn ($c) => $c->where('guard_name', $guardName))
+                    ->pluck('name');
+
+                return WildcardChecker::filter($permission, $names)->isNotEmpty();
+            }
+
+            $permission = $this->filterPermission($permission, $guardName);
+        } catch (PermissionDoesNotExist) {
+            return false;
+        }
+
+        return $this->globalPermissions()->contains(fn ($p): bool => (string) $p->getKey() === (string) $permission->getKey());
+    }
+
+    /**
      * The reserved team id global assignments are stored under.
      */
     public static function globalTeamId(): int|string
@@ -517,22 +553,6 @@ trait HasRoles
             ->get([$permission->getTable().'.*'])
             ->unique(fn ($p) => $p->getKey())
             ->values();
-    }
-
-    /**
-     * Whether one of the model's global roles carries this permission.
-     *
-     * @throws PermissionDoesNotExist
-     */
-    protected function hasPermissionViaGlobalRole(Permission|string $permission, ?string $guardName = null): bool
-    {
-        if (! app(PermissionRegistrar::class)->teams) {
-            return false;
-        }
-
-        $permission = $this->filterPermission($permission, $guardName);
-
-        return $this->globalPermissions()->contains(fn ($p): bool => (string) $p->getKey() === (string) $permission->getKey());
     }
 
     /**

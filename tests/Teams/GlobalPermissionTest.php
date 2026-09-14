@@ -183,3 +183,49 @@ test('an account with no global roles never queries for their permissions', func
 
     expect($permissionQueries)->toHaveCount(0);
 });
+
+test('hasGlobalPermission tells a permission held everywhere from one held in a team', function () {
+    $user = testUser('scope@example.com');
+    $user->assignGlobalRole('admin');
+
+    atTeam(1);
+    $editor = Role::create(['name' => 'editor', 'guard_name' => 'web', 'team_id' => 1]);
+    $editor->givePermissionTo('posts.edit');
+    $user->assignRole($editor);
+    $user = $user->fresh();
+
+    expect($user->hasPermissionTo('posts.edit'))->toBeTrue()
+        ->and($user->hasGlobalPermission('posts.edit'))->toBeFalse()
+        ->and($user->hasGlobalPermission('users.edit'))->toBeTrue()
+        ->and($user->hasGlobalPermission(Permission::findByName('users.view', 'web')))->toBeTrue();
+});
+
+test('hasGlobalPermission takes a wildcard and a guard', function () {
+    $user = testUser('wild-scope@example.com');
+    $user->assignGlobalRole('admin');
+    atTeam(1);
+    $user = $user->fresh();
+
+    expect($user->hasGlobalPermission('users.*'))->toBeTrue()
+        ->and($user->hasGlobalPermission('users.*', 'web'))->toBeTrue()
+        ->and($user->hasGlobalPermission('users.*', 'api'))->toBeFalse()
+        ->and($user->hasGlobalPermission('posts.*'))->toBeFalse();
+});
+
+test('hasGlobalPermission answers no, rather than throwing, for a permission nobody has', function () {
+    $user = testUser('none@example.com');
+    atTeam(1);
+
+    expect($user->fresh()->hasGlobalPermission('nope.never'))->toBeFalse();
+});
+
+test('a super-admin has no global permissions — it bypasses instead', function () {
+    Role::query()->create(['name' => 'super-admin', 'guard_name' => 'web']);
+    $user = testUser('root@example.com');
+    $user->assignGlobalRole('super-admin');
+    atTeam(1);
+    $user = $user->fresh();
+
+    expect($user->hasGlobalPermission('users.view'))->toBeFalse()
+        ->and($user->can('users.view'))->toBeTrue();
+});

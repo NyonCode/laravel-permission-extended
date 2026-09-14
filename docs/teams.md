@@ -53,6 +53,19 @@ Global permissions add up with the current team's: `hasPermissionTo()`,
 both. They are read in one query per model instance and never for an account with
 no global roles.
 
+To tell a permission held everywhere from one held in the current team — the
+question a screen asks to decide between showing everything and showing one
+team — use `hasGlobalPermission()`:
+
+```php
+$user->hasPermissionTo('users.viewAny');      // from a team role or a global one
+$user->hasGlobalPermission('users.viewAny');  // only from a global role
+```
+
+It takes wildcards, answers `false` rather than throwing for a permission that
+does not exist, and is `false` for a super-admin, who bypasses checks instead of
+holding permissions — ask `hasGlobalRole()` for that.
+
 `hasRole()` does not change: it is still the current team's question, and so are
 `@role` and the `role:` middleware. Ask `hasGlobalRole()` for a global role — or,
 better, check a permission, which answers the same way whoever granted it.
