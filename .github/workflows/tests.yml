@@ -93,6 +93,10 @@ jobs:
       - name: 📦 Install dependencies
         shell: bash
         run: |
+          # Packagist flags every Laravel 10 and 11 release with an advisory, and
+          # Composer refuses to install flagged versions. The package still
+          # supports them, so let CI install them to test against.
+          composer config policy.advisories.ignore --json '["laravel/framework"]'
           composer require "illuminate/support:${{ steps.versions.outputs.laravel }}" --no-interaction --no-update
           composer require --dev "orchestra/testbench:${{ steps.versions.outputs.testbench }}" "pestphp/pest:${{ steps.versions.outputs.pest }}" "pestphp/pest-plugin-laravel:${{ steps.versions.outputs.pest_plugin }}" --no-interaction --no-update
           composer update --${{ matrix.stability }} --no-interaction --no-progress
