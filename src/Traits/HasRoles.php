@@ -78,6 +78,20 @@ trait HasRoles
      */
     protected ?Collection $globalPermissionsCache = null;
 
+    /**
+     * Answers to `hasGlobalRole()` without teams, keyed by role name and guard,
+     * read once per model instance.
+     *
+     * The super-admin gate asks before every ability check — every menu item,
+     * every row action — and without teams the question is Spatie's
+     * `hasRole()`, which goes through `loadMissing('roles')` on each call. The
+     * same lifetime as the caches above: flushed with them on every role or
+     * permission change made through this trait.
+     *
+     * @var array<string,bool>
+     */
+    protected array $globalRoleAnswersCache = [];
+
     // =================================================================
     // Permission checks (with wildcard support)
     // =================================================================
@@ -315,7 +329,11 @@ trait HasRoles
     public function hasGlobalRole(string|Role|array $roles, ?string $guardName = null): bool
     {
         if (! app(PermissionRegistrar::class)->teams) {
-            return $this->hasRole($roles, $guardName);
+            if (! is_string($roles)) {
+                return $this->hasRole($roles, $guardName);
+            }
+
+            return $this->globalRoleAnswersCache[$roles.'|'.$guardName] ??= $this->hasRole($roles, $guardName);
         }
 
         $held = $this->globalRoles();
@@ -447,6 +465,7 @@ trait HasRoles
         $this->wildcardPermissionNamesCache = null;
         $this->globalRolesCache = null;
         $this->globalPermissionsCache = null;
+        $this->globalRoleAnswersCache = [];
         WildcardChecker::flush();
 
         return $this;
